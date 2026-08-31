@@ -1,0 +1,63 @@
+{
+  "id": "fdpm.media",
+  "version": "0.1.0",
+  "spec_version": "1.2.0",
+  "kind": "server",
+  "name": "Media",
+  "description": "A standards-aligned domain profile for heterogeneous media -- music, film, television, books, journalism, scholarship, social posts and platform video -- and for annotations attached to whole resources or to precise fragments of them. Layered on FRBR: work, expression, manifestation, asset. Aligns with schema.org, W3C Web Annotation, Media Fragments, Dublin Core, ActivityStreams, IPTC, EBUCore, MusicBrainz, ONIX, PROV-O and CiTO.",
+  "authors": ["Pedro Anisio Silva"],
+  "license": "MIT",
+  "host_compatibility": {
+    "fdpm": ">=1.1,<2",
+    "expr_helper_set": ">=1.1.0,<2"
+  },
+  "permissions": ["read:workbooks", "read:primitives", "read:relations", "export:workbook"],
+  "capabilities": [
+    {
+      "capability_id": "cap:profile",
+      "local_name": "media",
+      "entry": "PROFILE"
+    },
+    {
+      "capability_id": "cap:validator",
+      "local_name": "identifier-scheme-and-layer",
+      "metadata": {
+        "rule_id": "media:val:identifier-scheme-and-layer",
+        "type_id": "media:Identifier",
+        "description": "Checks an identifier's registry syntax and that the FRBR layer it addresses matches the record it names."
+      }
+    },
+    {
+      "capability_id": "cap:validator",
+      "local_name": "localized-text-primary-locale",
+      "metadata": {
+        "rule_id": "media:val:localized-text-primary-locale",
+        "description": "Checks that every localized value resolves its declared primary locale."
+      }
+    },
+    {
+      "capability_id": "cap:validator",
+      "local_name": "assertion-confidence",
+      "metadata": {
+        "rule_id": "media:val:assertion-confidence",
+        "description": "Checks that an inference carries confidence, a fact does not, and no edge points at itself."
+      }
+    },
+    {
+      "capability_id": "cap:validator",
+      "local_name": "acyclic-predicate",
+      "metadata": {
+        "rule_id": "media:val:acyclic-predicate",
+        "description": "Rejects an edge that closes a cycle on a predicate declared acyclic."
+      }
+    },
+    {
+      "capability_id": "cap:exporter",
+      "local_name": "media-jsonld",
+      "metadata": {
+        "format": "media-jsonld",
+        "description": "JSON-LD projection using schema.org classes, W3C Web Annotation terms and PROV-O provenance."
+      }
+    }
+  ]
+}

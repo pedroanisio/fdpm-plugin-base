@@ -1,0 +1,27 @@
+{
+  "name": "fdpm-plugin-media",
+  "version": "0.1.0",
+  "description": "An FDPM plugin contributing profile:media:1.0 \u2014 a standards-aligned, FRBR-layered domain profile for heterogeneous media and the annotations attached to it.",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-manifest.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run typecheck && npm run test && npm run build && node scripts/verify-load.mjs"
+  },
+  "devDependencies": {
+    "@fdpm/cli": "file:/home/admin/github-mirror/_editors/fdpm-cli/fdpm-cli",
+    "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^3.2.4",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.4"
+  }
+}
