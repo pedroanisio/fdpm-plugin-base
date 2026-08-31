@@ -79,7 +79,7 @@ export function activate(ctx: PluginContext): void {
 
   ctx.registerExporter({ format: EXPORT_FORMAT, fn: exportJsonLd });
 
-  ctx.log.info(
+  ctx.logger.info(
     `media activated: profile ${PROFILE_ID} v${PROFILE.version} with ` +
       `${PROFILE.primitive_types.length} primitive types, ` +
       `${PROFILE.relation_types.length} relation types, ` +
@@ -98,5 +98,5 @@ export function activate(ctx: PluginContext): void {
  * @param ctx - Registration surface supplied by the host.
  */
 export function deactivate(ctx: PluginContext): void {
-  ctx.log.info(`media deactivated: ${PROFILE_ID} unregistered.`);
+  ctx.logger.info(`media deactivated: ${PROFILE_ID} unregistered.`);
 }

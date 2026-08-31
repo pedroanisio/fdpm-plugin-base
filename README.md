@@ -137,8 +137,20 @@ It caught three real defects during development, recorded in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#5-deliberate-deviations-from-the-source).
 
 `npm run check` also runs `scripts/verify-load.mjs`, which copies `dist/` into a
-staged plugin-path layout and loads it through a real dynamic import — the unit
-suite proves the modules correct, and only this proves the packaging is.
+staged plugin-path layout and hands it to a **real `Host`**: discovery from a
+`FDPM_PLUGIN_PATH` entry, activation with the host's own `PluginContext`, then
+three assertions against the running host — the profile reaches the registry
+with the shape the module declares, `media:val:identifier-scheme-and-layer`
+rejects an ISRC declared at the manifestation layer, and `runExporter` produces
+JSON-LD carrying an `@context`.
+
+The host is there because a mock was not enough. Until v0.1.1 this script
+activated against a hand-written context object, and that object was written
+from the same reading of the host contract as the plugin: both said `ctx.log`
+where the host says `ctx.logger`. The script passed while the host quarantined
+the plugin on contact and `profile:media:1.0` never registered. A stand-in
+derived from the code under test cannot falsify that code. Each check here has
+been confirmed to fail under fault injection.
 
 ## Documents
 

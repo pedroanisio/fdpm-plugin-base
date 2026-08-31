@@ -1,6 +1,6 @@
 {
   "name": "fdpm-plugin-media",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An FDPM plugin contributing profile:media:1.0 \u2014 a standards-aligned, FRBR-layered domain profile for heterogeneous media and the annotations attached to it.",
   "license": "MIT",
   "type": "module",

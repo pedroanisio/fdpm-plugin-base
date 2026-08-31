@@ -3,9 +3,10 @@
 //
 // `@fdpm/cli` exports its meta-model but not `PluginContext`, and its package
 // `exports` map blocks deep imports. The registration surface is therefore
-// declared here structurally: the host's real context satisfies it, and the
-// plugin keeps compiling when the host's internal paths move. Nothing in this
-// module is imported at runtime -- the host injects the context.
+// declared here structurally. That the host satisfies it is a claim this file
+// cannot make good on by itself -- it is checked by activating against a real
+// `Host` in `scripts/verify-load.mjs`, which is the only place the claim can
+// fail. Nothing here is imported at runtime; the host injects the context.
 // ---------------------------------------------------------------------------
 
 import type {
@@ -57,7 +58,14 @@ export interface ExporterRegistration {
   fn: (transfer: ProjectTransfer) => Uint8Array;
 }
 
-/** Host logger; messages reach the CLI's diagnostic channel. */
+/**
+ * Host logger; messages reach the CLI's diagnostic channel.
+ *
+ * @remarks
+ * Reached as `ctx.logger`, not `ctx.log`. The host names this member `logger`
+ * (SPEC-CORE 6.2 `PluginContext`), and an entry module that guesses the name
+ * throws inside `activate` and is quarantined before its profile survives.
+ */
 export interface PluginLogger {
   info(message: string, meta?: Record<string, unknown>): void;
   warn(message: string, meta?: Record<string, unknown>): void;
@@ -65,10 +73,19 @@ export interface PluginLogger {
   debug(message: string, meta?: Record<string, unknown>): void;
 }
 
-/** Registration surface handed to {@link activate} once per enable. */
+/**
+ * Registration surface handed to {@link activate} once per enable.
+ *
+ * @remarks
+ * A structural subset of the host's `PluginContext`: it declares the members
+ * this plugin reads and nothing else. Declaring a member the host does not
+ * supply is the failure mode this interface exists to prevent -- it type-checks
+ * against the plugin's own mocks and throws against the host. `scripts/verify-load.mjs`
+ * activates against a real `Host` for exactly that reason; a mock cannot
+ * falsify a claim about a contract it was written from.
+ */
 export interface PluginContext {
-  readonly manifest: PluginManifest;
-  readonly log: PluginLogger;
+  readonly logger: PluginLogger;
   registerProfile(profile: DomainProfileLike): void;
   registerValidator(registration: ValidatorRegistration): void;
   registerExporter(registration: ExporterRegistration): void;

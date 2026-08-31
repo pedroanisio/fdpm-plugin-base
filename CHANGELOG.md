@@ -4,6 +4,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 The profile carries its own semver, declared as `PROFILE_VERSION`; this file
 records the plugin's.
 
+## [0.1.1] — 2026-08-31
+
+### Fixed
+
+- **The plugin could not activate.** `activate()` reached the host logger as
+  `ctx.log`; the host names that member `ctx.logger` (SPEC-CORE 6.2
+  `PluginContext`). Activation threw, the host quarantined the plugin, and
+  `profile:media:1.0` never entered the profile registry — so nothing the
+  plugin contributes was reachable from any host process.
+- **`src/host-contract.ts` declared a member the host does not supply.** The
+  interface carried `manifest` on the context; the host supplies no such
+  member and the entry module never read it. Removed, so the declared contract
+  is a subset of the host's rather than a superset.
+
+### Changed
+
+- **`scripts/verify-load.mjs` activates against a real `Host`.** It previously
+  activated against a hand-written context object, which was derived from the
+  same assumption as the plugin and therefore agreed with it about `ctx.log`.
+  The script reported the packaging correct while the host rejected it on
+  contact — a control that could not fail. It now discovers the staged build
+  from a `FDPM_PLUGIN_PATH` search path, activates it with the host's own
+  context, asserts the profile reaches the registry with the shape the module
+  declares, requires `media:val:identifier-scheme-and-layer` to reject an ISRC
+  declared at the manifestation layer, and runs the JSON-LD exporter through
+  `runExporter`. Each check was confirmed to fail under fault injection.
+
 ## [0.1.0] — 2026-08-31
 
 First release. Profile `profile:media:1.0` at version `0.1.0`.

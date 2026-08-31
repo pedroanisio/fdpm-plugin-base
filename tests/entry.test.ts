@@ -26,8 +26,7 @@ interface Recorded {
 function recordingContext(): { ctx: PluginContext; recorded: Recorded } {
   const recorded: Recorded = { profiles: [], validators: [], exporters: [], logs: [] };
   const ctx: PluginContext = {
-    manifest,
-    log: {
+    logger: {
       info: (m) => recorded.logs.push(m),
       warn: (m) => recorded.logs.push(m),
       error: (m) => recorded.logs.push(m),
