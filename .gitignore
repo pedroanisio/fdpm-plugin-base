@@ -4,3 +4,6 @@ coverage/
 _tmp/
 *.tsbuildinfo
 .repo/
+
+# Local host configuration; .env.example is the committed template.
+.env

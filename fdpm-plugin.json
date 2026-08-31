@@ -11,6 +11,7 @@
     "fdpm": ">=1.1,<2",
     "expr_helper_set": ">=1.1.0,<2"
   },
+  "trust": { "signed_by": "pedroanisio-local" },
   "permissions": ["read:workbooks", "read:primitives", "read:relations", "export:workbook"],
   "capabilities": [
     {

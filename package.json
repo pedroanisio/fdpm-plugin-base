@@ -8,6 +8,7 @@
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/copy-manifest.mjs",
+    "deploy": "node scripts/deploy.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
