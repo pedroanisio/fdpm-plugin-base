@@ -126,7 +126,7 @@ docs/SCORECARD.md        the schema-design standard's verdict
 
 ## Verification
 
-138 tests, all passing; 98.5% statements and 91.4% branches on `src/`, against
+138 tests, all passing; 98.54% statements and 91.39% branches on `src/`, against
 an 80% floor. The figures come from `npm run coverage`.
 
 The distinctive one is `tests/schema-rules.test.ts`: every checkable rule of the
