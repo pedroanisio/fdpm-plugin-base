@@ -12,7 +12,7 @@
 export const PROFILE_ID = "profile:media:1.0" as const;
 
 /** Profile semver. Literal so the version is readable from the schema alone. */
-export const PROFILE_VERSION = "0.1.0" as const;
+export const PROFILE_VERSION = "0.2.0" as const;
 
 /** Schema version stamped on every record this profile validates. */
 export const SCHEMA_VERSION = "1.0.0" as const;

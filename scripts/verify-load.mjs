@@ -24,6 +24,9 @@ const PLUGIN_ID = "fdpm.media";
 const PROFILE_ID = "profile:media:1.0";
 const FORMAT = "media-jsonld";
 const RULE = "media:val:identifier-scheme-and-layer";
+const TARGET = "text/markdown";
+const CATALOGUE = "media:CatalogueRenderer";
+const ANNOTATIONS = "media:AnnotationIndexRenderer";
 
 const PROVENANCE = {
   createdAt: "2026-01-01T00:00:00Z",
@@ -140,6 +143,53 @@ async function runChecks(pluginDir, searchPath) {
   const doc = JSON.parse(Buffer.from(bytes).toString("utf8"));
   if (!doc["@context"]) fail(`${FORMAT} output carries no @context`);
 
+  // Renderers. Registration is permission-gated on render:server, so a
+  // manifest missing the permission fails inside activate() rather than here
+  // -- but a renderer the host never installed fails here, and so does one
+  // whose output the §6.5 gate rejects.
+  const slice = host.getProject("verify");
+  const resolved = host.profiles.getResolved(PROFILE_ID);
+  const renderInput = () => ({
+    workbookId: "verify",
+    primitives: Object.values(slice.primitives),
+    relations: Object.values(slice.relations),
+    profile: resolved,
+  });
+
+  // The resolved profile must carry this plugin's own bindings. When a profile
+  // declares none, the registry appends the host's profile-generic renderer
+  // instead, and `fdpm render <wb> text/markdown` returns that.
+  const boundIds = (resolved.renderers ?? []).map((b) => b.renderer_id);
+  for (const id of [CATALOGUE, ANNOTATIONS]) {
+    if (!boundIds.includes(id)) fail(`resolved profile declares no binding for ${id}`);
+  }
+
+  for (const id of [CATALOGUE, ANNOTATIONS]) {
+    if (!host.plugins.findRenderer(TARGET, id)) {
+      fail(`no renderer registered for target=${TARGET} rendererId=${id}`);
+      return failures;
+    }
+  }
+
+  // No --renderer-id: the host resolves through the profile's bindings, in
+  // declaration order. This is the call `fdpm render verify text/markdown`
+  // makes, and it must reach this plugin rather than core's generic renderer.
+  const rendered = await host.plugins.runRenderer(TARGET, renderInput());
+  expect(rendered.rendererId, CATALOGUE, `default renderer for ${TARGET}`);
+  expect(rendered.contentType, TARGET, "catalogue content type");
+  const catalogue = new TextDecoder("utf-8", { fatal: true }).decode(rendered.bytes);
+  if (!catalogue.includes("manifestation:verify")) {
+    fail("the catalogue does not contain the release written into the workbook");
+  }
+  if (!catalogue.includes(PROFILE_ID)) fail("the catalogue does not name the profile it renders");
+
+  const annotations = await host.plugins.runRenderer(TARGET, renderInput(), {
+    rendererId: ANNOTATIONS,
+  });
+  expect(annotations.rendererId, ANNOTATIONS, "explicitly selected renderer");
+  expect(annotations.contentType, TARGET, "annotation index content type");
+  new TextDecoder("utf-8", { fatal: true }).decode(annotations.bytes);
+
   if (failures.length === 0) {
     console.log(
       `OK ${PLUGIN_ID}@${discovered.version} activated by a real Host from a ` +
@@ -149,7 +199,9 @@ async function runChecks(pluginDir, searchPath) {
         `${(profile.inline_structs ?? []).length} shared structs, ` +
         `${(profile.validation_rules ?? []).length} CEL rules; ` +
         `${RULE} rejected a mislayered identifier; ` +
-        `exporter ${FORMAT} produced ${bytes.length} bytes.`,
+        `exporter ${FORMAT} produced ${bytes.length} bytes; ` +
+        `${TARGET} resolved to ${rendered.rendererId} (${rendered.bytes.length} bytes) ` +
+        `and ${ANNOTATIONS} to ${annotations.bytes.length} bytes.`,
     );
   }
   return failures;

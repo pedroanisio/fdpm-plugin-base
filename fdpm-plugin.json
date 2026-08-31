@@ -1,6 +1,6 @@
 {
   "id": "fdpm.media",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "spec_version": "1.2.0",
   "kind": "server",
   "name": "Media",
@@ -11,8 +11,16 @@
     "fdpm": ">=1.1,<2",
     "expr_helper_set": ">=1.1.0,<2"
   },
-  "trust": { "signed_by": "pedroanisio-local" },
-  "permissions": ["read:workbooks", "read:primitives", "read:relations", "export:workbook"],
+  "trust": {
+    "signed_by": "pedroanisio-local"
+  },
+  "permissions": [
+    "read:workbooks",
+    "read:primitives",
+    "read:relations",
+    "export:workbook",
+    "render:server"
+  ],
   "capabilities": [
     {
       "capability_id": "cap:profile",
@@ -58,6 +66,28 @@
       "metadata": {
         "format": "media-jsonld",
         "description": "JSON-LD projection using schema.org classes, W3C Web Annotation terms and PROV-O provenance."
+      }
+    },
+    {
+      "capability_id": "cap:renderer",
+      "local_name": "catalogue-md",
+      "entry": "renderCatalogue",
+      "metadata": {
+        "renderer_id": "media:CatalogueRenderer",
+        "target": "text/markdown",
+        "output_path": "catalogue.md",
+        "description": "FRBR-layered catalogue: each work with the expressions, manifestations and assets it owns, identifiers resolved against their registries, credits from attributedTo edges, and every reference that does not resolve reported as a finding."
+      }
+    },
+    {
+      "capability_id": "cap:renderer",
+      "local_name": "annotations-md",
+      "entry": "renderAnnotationIndex",
+      "metadata": {
+        "renderer_id": "media:AnnotationIndexRenderer",
+        "target": "text/markdown",
+        "output_path": "annotations.md",
+        "description": "Annotations grouped by the resource they are attached to, each shown with the anchor its selectorType discriminates -- time range, character span, page, region -- and a finding where the selector promises an anchor the record does not carry."
       }
     }
   ]

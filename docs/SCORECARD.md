@@ -1,4 +1,4 @@
-# Review Scorecard — profile:media:1.0 v0.1.0
+# Review Scorecard — profile:media:1.0 v0.2.0
 
 Back to the [root README](../README.md).
 
@@ -50,7 +50,7 @@ which is which.
 | 19  | Explicit, monotonic versioning | MUST | Pass  | _Gated._ `PROFILE_VERSION` is a literal semver; every record carries `schemaVersion`, annotated immutable.                  |
 | 20  | No duplicate-version entities  | MUST | Pass  | _Gated._ No type id carries a version suffix.                                                                               |
 | 21  | Breaking changes classified    | MUST | Pass  | Not gated. The classification matrix is in the architecture note, §7.                                                       |
-| 22  | Deprecation annotated          | MUST | Pass  | _Gated._ A field annotated `x-deprecated` must also declare since, replacement and sunset. No field is deprecated at 0.1.0. |
+| 22  | Deprecation annotated          | MUST | Pass  | _Gated._ A field annotated `x-deprecated` must also declare since, replacement and sunset. No field is deprecated at 0.2.0. |
 
 ## Part V — Operational annotations
 
@@ -87,11 +87,17 @@ Recorded because the operator did not specify them:
    (`BlogPosting`, `WebPage`, `TvSeasonWork`, `TvEpisodeWork`, `AvRelease`)
    are absent; adding each is a minor bump, and the layer spine they attach to
    is already here.
-2. **Profile version 0.1.0, not 1.0.0.** The source schema is 1.0.0, but this
+2. **Profile version 0.2.0, not 1.0.0.** The source schema is 1.0.0, but this
    profile does not cover it in full, and 1.0.0 would claim a stability the
    coverage does not support.
 3. **Identifiers as records, not embedded values.** This is the largest
    departure from the source and the reason the layer invariant can be checked
    against the referent rather than against the declaration alone.
-4. **No renderer.** `cap:renderer` is unclaimed; the JSON-LD exporter covers
-   the interchange case, and a human-readable rendering has no agreed shape yet.
+4. **Two renderers, both `text/markdown`.** `media:CatalogueRenderer` is the
+   default for the target and `media:AnnotationIndexRenderer` is selected by
+   id. Neither is derived from the source model, which specifies no rendering;
+   their shape is a judgement about what a media catalogue has to show, and it
+   is recorded in [ARCHITECTURE.md §8](ARCHITECTURE.md#8-rendering). No other
+   target is claimed: `image/svg+xml` and `application/pdf` would each need a
+   layout decision this profile has no basis for, and the JSON-LD exporter
+   already covers machine interchange.

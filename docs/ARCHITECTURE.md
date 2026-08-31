@@ -127,3 +127,87 @@ A field scheduled for removal is annotated `x-deprecated`, `x-deprecated-since`,
 `x-replaced-by` and `x-sunset` in the same version it is deprecated;
 `tests/schema-rules.test.ts` fails a deprecation missing any of the three
 companions.
+
+## 8. Rendering
+
+Two `cap:renderer` capabilities, both `text/markdown`:
+`media:CatalogueRenderer` (the target's default, because the profile declares
+it first) and `media:AnnotationIndexRenderer` (selected by id).
+
+### Why not the host's generic renderer
+
+Every profile the host resolves bears a runnable renderer: when a profile
+declares no bindings, `ProfileRegistry.getResolved` appends
+`core:WorkbookRenderer`, which groups records by `type_id` and prints a table
+per group. That is the right thing to do knowing no domain — and it is the
+wrong thing for this one. This profile's meaning is the spine: which work a
+recording realizes, which release carries a track, which registry names which
+layer. A table per type shows every one of those as an opaque id in a cell, and
+a reader cannot reconstruct the spine from it.
+
+### The spine is read from the profile, not from a list beside it
+
+Neither renderer carries a table of type names or foreign-key fields. Every
+reference in this profile already declares its target and its lifecycle
+ownership as `[x-fk]` and `[x-relationship]` inside the field description (§2),
+and every resource type pins its `layer` (§1). `src/renderers/model.ts` reads
+both back out at render time: composition references become the containment
+forest, and the pinned layer decides which section a record appears in.
+
+A renderer that instead listed `MusicRecording.compositionId`,
+`MusicTrack.releaseId` and the rest would be a second copy of the model, and
+the copy would fall behind the first time a type was added. This is the same
+argument that put the annotations in `description` rather than a sidecar.
+
+**Rejected:** hardcoding the spine for speed. The scan is over ~29 types once
+per render, memoized per type; the cost is not measurable against reading a
+workbook.
+
+### Cycles are cut in the index, not guarded in the walk
+
+Composition references are meant to form a forest, and nothing in the
+meta-model enforces it. A cycle would give every record in it a parent, so
+none would be a root, so a forest walk would render none of them at all — the
+records would not merely be misplaced, they would be absent, and an absent
+record is invisible. `indexWorkbook` therefore cuts the link that closes a
+cycle before the forest is read, reports each cut, and hands the renderer a
+structure whose traversal terminates by construction.
+
+That is also why there is no depth cap on the walk. A cap would truncate a
+chain that is merely long, silently dropping records to guard against a
+condition the index has already removed.
+
+### Refusal is in-band
+
+A renderer asked for a workbook governed by another profile emits a document
+saying so, plus a finding — it does not raise. The host treats any exception
+that is not its own `FDPMException` as a plugin defect and quarantines the
+plugin that raised it, and `FDPMException` is reachable only through a runtime
+import of `@fdpm/cli`. Every import of that package here is `import type`,
+erased at compile time, because a deployed plugin directory is `dist/` copied
+without `node_modules` and could not resolve a value import. So a caller who
+points `--renderer-id media:CatalogueRenderer` at a UML workbook gets a refusal
+and a non-zero `--strict` exit, and the media plugin stays active.
+
+`src/exporter.ts` is deliberately not changed to match. An exporter's output is
+JSON-LD, and there is no refusal document that is both valid JSON-LD and
+honest — an empty `@graph` asserts that the workbook has no records. Refusing
+by raising is the correct behaviour there; that the host responds by
+quarantining the plugin is a gap in the host contract, not something this
+plugin should paper over by emitting bytes that lie.
+
+### Findings are the report, omission is not
+
+Every record the workbook holds appears somewhere in the catalogue, including
+the ones whose references are broken: a record rendered with a reported defect
+is inspectable, one silently dropped is not, and a document that omits records
+disagrees with the workbook it claims to describe. Identifiers are the one type
+rendered against another record rather than in their own table, so the ones
+whose `identifiesId` does not resolve are listed separately — which keeps the
+guarantee whole rather than making an exception to it.
+
+The host's `RenderFinding` shape was defined for the template DSL, so
+`templateId` carries the renderer id and `line`/`column` are zero. It is the
+only findings channel a renderer has, and it is load-bearing:
+`fdpm render --strict` sets a verification exit code when any finding is
+present.

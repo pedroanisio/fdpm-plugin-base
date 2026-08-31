@@ -3,13 +3,15 @@
 //
 // The host imports this file, reads `manifest`, and calls `activate` once per
 // enable. Registration is the whole of the work: the profile, the validators
-// the meta-model cannot express, and the JSON-LD exporter.
+// the meta-model cannot express, the JSON-LD exporter and the two Markdown
+// renderers.
 // ---------------------------------------------------------------------------
 
 import { createRequire } from "node:module";
 import type { PluginContext, PluginManifest } from "./host-contract.js";
 import { EXPORT_FORMAT, exportJsonLd } from "./exporter.js";
 import { PROFILE, PROFILE_RELATION_TYPE_IDS, PROFILE_RESOURCE_TYPE_IDS } from "./profile.js";
+import { RENDERERS } from "./renderers/index.js";
 import { buildValidators } from "./validators.js";
 import { PROFILE_ID } from "./vocabulary.js";
 
@@ -79,13 +81,25 @@ export function activate(ctx: PluginContext): void {
 
   ctx.registerExporter({ format: EXPORT_FORMAT, fn: exportJsonLd });
 
+  // Registered in the order `RENDERERS` declares, which is the order the
+  // profile's bindings declare, which is the order `findRenderer` resolves a
+  // bare `text/markdown` request in.
+  for (const renderer of RENDERERS) {
+    ctx.registerRenderer({
+      target: renderer.target,
+      rendererId: renderer.rendererId,
+      fn: renderer.fn,
+    });
+  }
+
   ctx.logger.info(
     `media activated: profile ${PROFILE_ID} v${PROFILE.version} with ` +
       `${PROFILE.primitive_types.length} primitive types, ` +
       `${PROFILE.relation_types.length} relation types, ` +
       `${PROFILE.inline_structs.length} shared structs, ` +
       `${PROFILE.validation_rules.length} CEL rules, ` +
-      `${registered.size} code validators, 1 exporter (${EXPORT_FORMAT}).`,
+      `${registered.size} code validators, 1 exporter (${EXPORT_FORMAT}), ` +
+      `${RENDERERS.length} renderers (${RENDERERS.map((r) => r.rendererId).join(", ")}).`,
   );
 }
 

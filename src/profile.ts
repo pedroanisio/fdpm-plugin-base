@@ -10,6 +10,7 @@ import type { DomainProfile } from "@fdpm/cli";
 import { PRIMITIVE_TYPES, CATEGORIES, RESOURCE_TYPE_IDS, SCOPES } from "./primitives.js";
 import { RELATION_TYPES, RELATION_TYPE_IDS } from "./relations.js";
 import { STRUCTS } from "./structs.js";
+import { RENDERER_BINDINGS } from "./renderers/index.js";
 import { buildValidationRules } from "./validation-rules.js";
 import { PROFILE_ID, PROFILE_VERSION } from "./vocabulary.js";
 
@@ -48,8 +49,13 @@ export const PROFILE: DomainProfile = {
     timeRangeTypes: TIME_RANGE_TYPES,
     pageRangeTypes: PAGE_RANGE_TYPES,
   }),
+  // `renderer_bindings` is the CLI-native form, binding a template to a
+  // primitive type; this profile ships none. `renderers` is the form a
+  // cap:renderer uses, and declaring it is what stops `findRenderer` from
+  // resolving a media workbook through another plugin's text/markdown
+  // renderer merely because that plugin loaded first.
   renderer_bindings: [],
-  renderers: [],
+  renderers: [...RENDERER_BINDINGS],
   inline_structs: STRUCTS,
   templates: [],
   scope_sets: { catalogue: ["scope:media:catalogue"], collection: ["scope:media:collection"] },

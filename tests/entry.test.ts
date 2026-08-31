@@ -12,6 +12,7 @@ import type {
   DomainProfileLike,
   ExporterRegistration,
   PluginContext,
+  RendererRegistration,
   ValidatorRegistration,
 } from "../src/host-contract.js";
 
@@ -19,12 +20,19 @@ interface Recorded {
   profiles: DomainProfileLike[];
   validators: ValidatorRegistration[];
   exporters: ExporterRegistration[];
+  renderers: RendererRegistration[];
   logs: string[];
 }
 
 /** Recording stand-in for the host's PluginContext. */
 function recordingContext(): { ctx: PluginContext; recorded: Recorded } {
-  const recorded: Recorded = { profiles: [], validators: [], exporters: [], logs: [] };
+  const recorded: Recorded = {
+    profiles: [],
+    validators: [],
+    exporters: [],
+    renderers: [],
+    logs: [],
+  };
   const ctx: PluginContext = {
     logger: {
       info: (m) => recorded.logs.push(m),
@@ -35,6 +43,7 @@ function recordingContext(): { ctx: PluginContext; recorded: Recorded } {
     registerProfile: (p) => recorded.profiles.push(p),
     registerValidator: (v) => recorded.validators.push(v),
     registerExporter: (e) => recorded.exporters.push(e),
+    registerRenderer: (r) => recorded.renderers.push(r),
   };
   return { ctx, recorded };
 }
@@ -89,6 +98,18 @@ describe("entry module", () => {
   // Nothing registered that the manifest does not declare, and nothing
   // declared that never registers: a capability row the host reads at
   // discovery but that no code honours is a lie told to the operator.
+  it("activate_registers_one_renderer_per_declared_renderer_capability", async () => {
+    const { ctx, recorded } = recordingContext();
+    await activate(ctx);
+    const declared = (
+      manifest.capabilities as { capability_id: string; metadata?: { renderer_id?: string } }[]
+    )
+      .filter((c) => c.capability_id === "cap:renderer")
+      .map((c) => c.metadata?.renderer_id)
+      .sort();
+    expect(recorded.renderers.map((r) => r.rendererId).sort()).toEqual(declared);
+  });
+
   it("activate_registered_rule_ids_are_exactly_those_the_manifest_declares", async () => {
     const { ctx, recorded } = recordingContext();
     await activate(ctx);

@@ -15,6 +15,7 @@ import type {
   ProjectTransfer,
   RelationInstance,
   ValidationFinding,
+  Workbook,
 } from "@fdpm/cli";
 
 /** Profile shape handed to {@link PluginContext.registerProfile}. */
@@ -59,6 +60,71 @@ export interface ExporterRegistration {
 }
 
 /**
+ * Workbook slice a renderer reads.
+ *
+ * @remarks
+ * `workbook` and `renderedAt` are optional on the signature because the host
+ * fills them in only when the render runs against a stored workbook; a direct
+ * caller supplies neither. A renderer that needs one must therefore handle its
+ * absence rather than assume the host was there.
+ */
+export interface RendererInput {
+  workbookId: string;
+  /** ISO-8601 snapshot time. The host supplies one per invocation. */
+  renderedAt?: string;
+  workbook?: Workbook;
+  primitives: readonly PrimitiveInstance[];
+  relations: readonly RelationInstance[];
+  profile: DomainProfile;
+}
+
+/**
+ * One problem the render could not resolve.
+ *
+ * @remarks
+ * The host's finding shape is the template DSL's, because the DSL was the
+ * only thing that used to produce findings. These renderers use no template,
+ * so `templateId` carries the renderer id and `line`/`column` are zero, and
+ * `expression` names the field or record that failed to resolve. The channel
+ * is load-bearing rather than decorative: `fdpm render --strict` sets a
+ * verification exit code when any finding is present, which is how a broken
+ * catalogue fails a pipeline instead of rendering a quietly wrong document.
+ */
+export interface RenderFinding {
+  kind: "render-error";
+  templateId: string;
+  line: number;
+  column: number;
+  expression: string;
+  message: string;
+}
+
+/**
+ * Bytes a renderer produced, with the type it claims for them.
+ *
+ * @remarks
+ * `contentType` MUST equal the `target` the renderer registered under. The
+ * host rejects the output otherwise (SPEC-CORE 6.5) -- a renderer cannot lie
+ * about what it produced.
+ */
+export interface RendererOutput {
+  bytes: Uint8Array;
+  contentType: string;
+  filename?: string;
+  findings?: RenderFinding[];
+}
+
+/** Produce one rendered artifact from a workbook slice. */
+export type RendererFn = (input: RendererInput) => RendererOutput;
+
+/** Binding of one renderer function to the target and id that select it. */
+export interface RendererRegistration {
+  target: string;
+  rendererId: string;
+  fn: RendererFn;
+}
+
+/**
  * Host logger; messages reach the CLI's diagnostic channel.
  *
  * @remarks
@@ -89,6 +155,7 @@ export interface PluginContext {
   registerProfile(profile: DomainProfileLike): void;
   registerValidator(registration: ValidatorRegistration): void;
   registerExporter(registration: ExporterRegistration): void;
+  registerRenderer(registration: RendererRegistration): void;
 }
 
 /** One capability row of `fdpm-plugin.json`. */
